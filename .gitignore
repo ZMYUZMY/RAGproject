@@ -1,0 +1,9 @@
+__pycache__/
+*.py[cod]
+.venv/
+.env
+.env.*
+chroma_db/
+chat_history/
+md5.txt
+.idea/
