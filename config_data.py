@@ -1,5 +1,3 @@
-
-
 md5_path = './md5.txt'
 
 
@@ -21,3 +19,10 @@ similarity_threshold = 2
 
 embedding_model_name = 'text-embedding-v3'
 chat_model_name = 'qwen-plus'
+
+
+session_config = {
+    'configurable': {
+        'session_id': 'user_01'
+    }
+}

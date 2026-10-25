@@ -1,44 +1,44 @@
 import os
 
 import json
-from langchain_community.chat_message_histories import FileChatMessageHistory
+
+from collections.abc import Sequence
+# langchain_community.chat_message_histories import FileChatMessageHistory
 from langchain_core.chat_history import BaseChatMessageHistory
 from langchain_core.messages import BaseMessage, message_to_dict, messages_from_dict
 
 
-class Squence:
-    pass
 def get_history(session_id):
-    return FileChatMessageHistory(session_id,'./chat_history')
+    return FileChatMessageHistory(session_id, './chat_history')
 
 class FileChatMessageHistory(BaseChatMessageHistory):
     def __init__(self,session_id,storage_path):
         self.session_id = session_id   #会话id
         self.storage_path = storage_path   #不同会话id的存储文件，所在的文件夹路径
         #完整的文件路径
-        self.file_path = os.path.join(self.storage_path,self.session_id)
+        self.file_path = os.path.join(self.storage_path,f"{self.session_id}.json")
 
         #确保文件夹存在
         os.makedirs(os.path.dirname(self.file_path),exist_ok=True)
 
-    def add_message(self,message:Squence[BaseMessage]) -> None:
+    def add_messages(self, messages : Sequence[BaseMessage] ) -> None:
 
         all_messages = list(self.messages)   #已有消息列表
-        all_messages.extend(message)           #新的和已有的融合成一个list
+        all_messages.extend(messages)           #新的和已有的融合成一个list
 
 
 
         new_messages = [message_to_dict(message) for message in all_messages]
         #将数据写入文件
-        with open(self.file_path,'a',encoding='utf-8') as f:
-            json.dump(new_messages,f)
+        with open(self.file_path,'w',encoding='utf-8') as f:
+            json.dump(new_messages,f,indent=4,ensure_ascii=False)
 
     @property     #装饰器将message方法变成成员属性用
     def messages(self) -> list[BaseMessage]:
         #当前文件内：list[字典]
         try:
             with open(self.file_path,'r',encoding='utf-8') as f:
-                messages = json.load(f)    #返回值就是list[字典]
+                messages_data = json.load(f)    #返回值就是list[字典]
                 return messages_from_dict(messages_data)
         except FileNotFoundError:
             return []
@@ -47,7 +47,3 @@ class FileChatMessageHistory(BaseChatMessageHistory):
     def clear(self) -> None:
         with open(self.file_path,'w',encoding='utf-8') as f:
             json.dump([],f)
-
-
-
-

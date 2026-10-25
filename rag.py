@@ -2,13 +2,14 @@ from langchain_community import embeddings
 from langchain_core.documents import Document
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate, format_document, MessagesPlaceholder
-from langchain_core.runnables import RunnablePassthrough, RunnableWithMessageHistory
+from langchain_core.runnables import RunnablePassthrough, RunnableWithMessageHistory, RunnableLambda
 from file_history_store import get_history
 
 from vector_stores import VectorStoreService
 from langchain_community.embeddings import DashScopeEmbeddings
 import config_data as config
 from langchain_community.chat_models import ChatTongyi
+
 
 
 def print_prompt(prompt):
@@ -27,13 +28,13 @@ class RagService(object):
         self.prompt_template = ChatPromptTemplate.from_messages(
             [
                 ('system','以我提供的已知参考资料为主，简洁的回答用户的问题。参考资料:{context}'),
-                ('sysytem','并且我提供用户的历史会话记录如下：'),
+                ('system','并且我提供用户的历史会话记录如下：'),
                 MessagesPlaceholder('history'),
                 ('user','请回答用户提问:{input}'),
             ]
         )
 
-        self.chat_model =ChatTongyi(model=config.chat_model_name)
+        self.chat_model =ChatTongyi(model=config.chat_model_name,streaming=True)
 
         self.chain = self.__get_chain()
 
@@ -51,11 +52,22 @@ class RagService(object):
 
             return formatted_str
 
+        def temp1(value:dict) -> str:
+            return value['input']
+
+        def temp2(value):
+            new_value = {}
+            new_value['input'] = value['input']['input']
+            new_value['context'] = value['context']
+            new_value['history'] = value['input']['history']
+            return new_value
+
+
         chain = (
             {
                 'input':RunnablePassthrough(),
-                'context':retriever | format_document
-            } | self.prompt_template | print_prompt | self.chat_model | StrOutputParser()
+                'context':RunnableLambda(temp1) | retriever | format_document
+            } | RunnableLambda(temp2) | self.prompt_template | print_prompt | self.chat_model | StrOutputParser()
         )
         conversation_chain  = RunnableWithMessageHistory(
             chain,
@@ -73,6 +85,5 @@ if __name__ == '__main__':
             'session_id':'user_01'
         }
     }
-    res = RagService(embedding=embeddings).chain.invoke('我体重120斤,身高170，尺码推荐')
+    res = RagService(embedding=embeddings).chain.invoke({'input':'冬天穿什么衣服'},session_config)
     print(res)
-

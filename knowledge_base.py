@@ -1,22 +1,14 @@
-#知识库
-import os
-from fileinput import filename
-from importlib.metadata import metadata
-
-import data
-from langchain_community.tools.connery import service
-
 import config_data as config
 import hashlib
 from langchain_chroma import Chroma
 from langchain_community.embeddings import DashScopeEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from datetime import datetime
+
+
+
+
 import os
-os.environ["DASHSCOPE_API_KEY"] = "sk-ws-H.YMPHLXP.a23S.MEUCIQCT3-ppt2-v37Js2cdPaF0isWC_NVkwA9neUNUPC6rIiwIgHpEiUmcIqtgHg_yB7o7wTPtv4nj1xLyvh12x_9vTAnw"
-
-
-
 
 def check_md5(md5_str:str):
     '''检查传入的md字符串是否已经被处理过了
@@ -63,7 +55,7 @@ class KnowledgeBaseService(object):
         self.chroma = Chroma(
             collection_name=config.collection_name,  #数据库表名
             embedding_function=DashScopeEmbeddings(model='text-embedding-v3'),
-            persist_directory=config.persist_directory,  #数据库本地文件夹
+            persist_directory=config.persist_directory,  #向量数据库本地文件夹
         )   #向量存储的实例chroma向量库对象
         self.spliter = RecursiveCharacterTextSplitter(
             chunk_size=config.chunk_size,  #分割的文本段最大长度
